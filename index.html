@@ -4,11 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>northcorr — Stream Radar</title>
- <!-- redeploy trigger --> 2
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body {
-    height:100%;
+    min-height:100%;
     background:
       radial-gradient(ellipse at 30% 15%, rgba(60,255,140,0.06), transparent 55%),
       linear-gradient(160deg, #0c110d 0%, #070a07 55%, #050605 100%);
@@ -17,6 +16,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    padding: 24px 0;
   }
   .card {
     width: min(92vw, 480px);
@@ -67,6 +67,65 @@
     letter-spacing: 1px;
   }
   .loading { opacity:0.5; }
+
+  .forecast-wrap {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(60,255,107,0.15);
+    display: none;
+  }
+  .forecast-wrap.visible { display: block; }
+  .forecast-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #6b7a6b;
+    margin-bottom: 14px;
+  }
+  .forecast {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+  .forecast-day {
+    flex: 1;
+    max-width: 100px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(60,255,107,0.15);
+    border-radius: 10px;
+    padding: 14px 8px 12px;
+  }
+  .forecast-day.likely {
+    border-color: rgba(60,255,107,0.55);
+    background: rgba(60,255,107,0.07);
+  }
+  .fd-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #9db09d;
+    margin-bottom: 8px;
+  }
+  .fd-icon {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+  .fd-chance {
+    font-size: 12px;
+    color: #b8c4b8;
+  }
+  .fd-tag {
+    margin-top: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #3cff6b;
+    min-height: 12px;
+  }
+
   a.follow {
     display:inline-block;
     margin-top:24px;
@@ -93,10 +152,53 @@
   <div class="rule"></div>
   <div id="sub" class="status-sub">Give it a second — we're reading the clouds.</div>
   <div id="meta" class="meta"></div>
+
+  <div id="forecastWrap" class="forecast-wrap">
+    <div class="forecast-label">Rain chance — next 3 days</div>
+    <div id="forecast" class="forecast"></div>
+  </div>
+
   <a class="follow" href="https://www.twitch.tv/northcorr" target="_blank" rel="noopener">Go to Channel</a>
 </div>
 
 <script>
+function dayLabel(dateStr) {
+  if (!dateStr) return '--';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString([], { weekday: 'short' });
+}
+
+function iconFor(f) {
+  if (f.likely_stream) return '🌧️';
+  const c = (f.condition || '').toLowerCase();
+  if (c.includes('partly')) return '⛅';
+  if (c.includes('fog')) return '🌫️';
+  if (c.includes('snow')) return '❄️';
+  if (c.includes('thunder')) return '⛈️';
+  return '☀️';
+}
+
+function renderForecast(forecast) {
+  const wrapEl = document.getElementById('forecastWrap');
+  const forecastEl = document.getElementById('forecast');
+
+  if (!Array.isArray(forecast) || forecast.length === 0) {
+    wrapEl.classList.remove('visible');
+    return;
+  }
+
+  forecastEl.innerHTML = forecast.map(f => `
+    <div class="forecast-day ${f.likely_stream ? 'likely' : ''}">
+      <div class="fd-label">${dayLabel(f.date)}</div>
+      <div class="fd-icon">${iconFor(f)}</div>
+      <div class="fd-chance">${f.chance != null ? f.chance : '--'}%</div>
+      <div class="fd-tag">${f.likely_stream ? 'Stream odds' : ''}</div>
+    </div>
+  `).join('');
+
+  wrapEl.classList.add('visible');
+}
+
 async function loadStatus() {
   try {
     const res = await fetch('./status.json?t=' + Date.now(), { cache: 'no-store' });
@@ -124,15 +226,15 @@ async function loadStatus() {
       const d = new Date(data.last_checked);
       metaEl.textContent = 'Last checked ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · auto-updates every 30 min';
     }
+
+    renderForecast(data.forecast);
   } catch (e) {
     document.getElementById('title').textContent = 'Status unavailable';
     document.getElementById('sub').textContent = 'Could not load the latest reading — try refreshing.';
   }
 }
 loadStatus();
-</script> 
- 
- 
+</script>
 
 </body>
 </html>
