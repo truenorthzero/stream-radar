@@ -29,6 +29,15 @@ jobs:
             exit 1
           fi
 
+          # Each secret must hold exactly one number. If either contains a
+          # comma it's almost certainly both coordinates pasted into one
+          # field, which makes Open-Meteo treat it as a multi-location
+          # request and return a differently-shaped response.
+          if [[ "$WEATHER_LAT" == *","* ]] || [[ "$WEATHER_LON" == *","* ]]; then
+            echo "WEATHER_LAT / WEATHER_LON contain a comma. Each secret must hold ONE number only — e.g. WEATHER_LAT = 43.6532 and WEATHER_LON = -79.3832 as two separate secrets, not combined into one."
+            exit 1
+          fi
+
           # Open-Meteo is free and needs no API key. We never log or commit
           # the lat/lon themselves — only the derived raining/condition result.
           # timezone=auto lets Open-Meteo infer the local timezone from the
@@ -68,7 +77,9 @@ jobs:
 
           # Build a 3-day forecast (tomorrow + 2 more days) from the daily
           # block. Only the derived condition/chance/likely_stream fields are
-          # written out — never raw coordinates.
+          # written out — never raw coordinates. Wrapped in try/catch so any
+          # unexpected shape in the API response degrades to an empty
+          # forecast instead of blocking the current-conditions write below.
           FORECAST=$(echo "$RESPONSE" | jq -c '
             def condition_for(code):
               if code == 0 then "Clear"
@@ -86,14 +97,17 @@ jobs:
               end;
             def is_rain_code(code):
               ([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99] | index(code)) != null;
-            [range(1;4) as $i |
-              {
-                date: (.daily.time[$i] // null),
-                condition: condition_for(.daily.weather_code[$i] // -1),
-                chance: (.daily.precipitation_probability_max[$i] // 0),
-                likely_stream: (is_rain_code(.daily.weather_code[$i] // -1) or ((.daily.precipitation_probability_max[$i] // 0) >= 50))
-              }
-            ]
+            try (
+              (.daily // {}) as $d |
+              [range(1;4) as $i |
+                {
+                  date: ($d.time[$i]? // null),
+                  condition: condition_for($d.weather_code[$i]? // -1),
+                  chance: ($d.precipitation_probability_max[$i]? // 0),
+                  likely_stream: (is_rain_code($d.weather_code[$i]? // -1) or (($d.precipitation_probability_max[$i]? // 0) >= 50))
+                }
+              ]
+            ) catch []
           ')
 
           jq -n \
