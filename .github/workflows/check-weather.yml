@@ -1,135 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>northcorr — Stream Radar</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html, body {
-    height:100%;
-    background:
-      radial-gradient(ellipse at 30% 15%, rgba(60,255,140,0.06), transparent 55%),
-      linear-gradient(160deg, #0c110d 0%, #070a07 55%, #050605 100%);
-    font-family: Arial, Helvetica, sans-serif;
-    color:#f5f7f4;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .card {
-    width: min(92vw, 480px);
-    border: 1px solid rgba(60,255,107,0.25);
-    border-radius: 14px;
-    padding: 40px 32px;
-    text-align:center;
-    position:relative;
-    background: rgba(10,14,10,0.5);
-    box-shadow: 0 0 60px rgba(60,255,107,0.06);
-  }
-  .kicker {
-    color:#3cff6b;
-    font-size:13px;
-    font-weight:700;
-    letter-spacing:4px;
-    text-transform:uppercase;
-    margin-bottom:18px;
-    opacity:0.85;
-  }
-  .status-icon {
-    font-size: 64px;
-    margin-bottom: 14px;
-    filter: drop-shadow(0 0 18px rgba(60,255,107,0.35));
-  }
-  .status-title {
-    font-size: 30px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-  }
-  .status-sub {
-    font-size: 15px;
-    color: #b8c4b8;
-    line-height:1.5;
-    margin-bottom: 22px;
-  }
-  .rule {
-    width: 46px;
-    height: 3px;
-    background: #3cff6b;
-    margin: 0 auto 22px auto;
-  }
-  .meta {
-    font-size: 12px;
-    color: #6b7a6b;
-    letter-spacing: 1px;
-  }
-  .loading { opacity:0.5; }
-  a.follow {
-    display:inline-block;
-    margin-top:24px;
-    color:#3cff6b;
-    text-decoration:none;
-    font-size:13px;
-    font-weight:700;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    border:1px solid rgba(60,255,107,0.4);
-    padding:10px 20px;
-    border-radius:6px;
-    transition: background 0.2s;
-  }
-  a.follow:hover { background: rgba(60,255,107,0.1); }
-</style>
-</head>
-<body>
+name: Check Weather
 
-<div class="card">
-  <div class="kicker">Northcorr // Stream Radar</div>
-  <div id="icon" class="status-icon loading">⏳</div>
-  <div id="title" class="status-title loading">Checking skies…</div>
-  <div class="rule"></div>
-  <div id="sub" class="status-sub">Give it a second — we're reading the clouds.</div>
-  <div id="meta" class="meta"></div>
-  <a class="follow" href="https://www.twitch.tv/northcorr" target="_blank" rel="noopener">Go to Channel</a>
-</div>
+on:
+  schedule:
+    # Runs at :07 and :37 past every hour (UTC). Offset from the hour/half-hour
+    # on purpose to avoid piling up with everyone else's cron jobs.
+    - cron: '7,37 * * * *'
+  workflow_dispatch: {}   # lets you trigger a manual check from the Actions tab
 
-<script>
-async function loadStatus() {
-  try {
-    const res = await fetch('./status.json?t=' + Date.now(), { cache: 'no-store' });
-    const data = await res.json();
+permissions:
+  contents: write
 
-    const iconEl = document.getElementById('icon');
-    const titleEl = document.getElementById('title');
-    const subEl = document.getElementById('sub');
-    const metaEl = document.getElementById('meta');
+jobs:
+  check-weather:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    iconEl.classList.remove('loading');
-    titleEl.classList.remove('loading');
+      - name: Fetch weather and build status.json
+        env:
+          WEATHER_LAT: ${{ secrets.WEATHER_LAT }}
+          WEATHER_LON: ${{ secrets.WEATHER_LON }}
+        run: |
+          set -euo pipefail
 
-    if (data.raining) {
-      iconEl.textContent = '🌧️';
-      titleEl.textContent = "It's raining — stream time";
-      subEl.textContent = 'Rain means indoor time, which means DayZ time. Pull up.';
-    } else {
-      iconEl.textContent = '☀️';
-      titleEl.textContent = 'Clear skies — no stream (yet)';
-      subEl.textContent = "Sun's out. Check back later, the second it rains this flips.";
-    }
+          if [ -z "${WEATHER_LAT:-}" ] || [ -z "${WEATHER_LON:-}" ]; then
+            echo "WEATHER_LAT / WEATHER_LON secrets are not set. Add them in repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
 
-    if (data.last_checked) {
-      const d = new Date(data.last_checked);
-      metaEl.textContent = 'Last checked ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · auto-updates every 30 min';
-    }
-  } catch (e) {
-    document.getElementById('title').textContent = 'Status unavailable';
-    document.getElementById('sub').textContent = 'Could not load the latest reading — try refreshing.';
-  }
-}
-loadStatus();
-</script>
+          # Open-Meteo is free and needs no API key. We never log or commit
+          # the lat/lon themselves — only the derived raining/condition result.
+          RESPONSE=$(curl -s "https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}&current=precipitation,weather_code&timezone=UTC")
 
-</body>
-</html>
+          WEATHER_CODE=$(echo "$RESPONSE" | jq -r '.current.weather_code // -1')
+          PRECIP=$(echo "$RESPONSE" | jq -r '.current.precipitation // 0')
+
+          # WMO weather codes: 51-67 = drizzle/rain/freezing rain,
+          # 80-82 = rain showers, 95-99 = thunderstorm.
+          RAINING="false"
+          case "$WEATHER_CODE" in
+            51|53|55|56|57|61|63|65|66|67|80|81|82|95|96|99) RAINING="true" ;;
+          esac
+          if (( $(echo "$PRECIP > 0" | bc -l 2>/dev/null || echo 0) )); then
+            RAINING="true"
+          fi
+
+          case "$WEATHER_CODE" in
+            0) CONDITION="Clear sky" ;;
+            1|2|3) CONDITION="Partly cloudy" ;;
+            45|48) CONDITION="Foggy" ;;
+            51|53|55) CONDITION="Drizzle" ;;
+            56|57) CONDITION="Freezing drizzle" ;;
+            61|63|65) CONDITION="Rain" ;;
+            66|67) CONDITION="Freezing rain" ;;
+            71|73|75|77) CONDITION="Snow" ;;
+            80|81|82) CONDITION="Rain showers" ;;
+            85|86) CONDITION="Snow showers" ;;
+            95|96|99) CONDITION="Thunderstorm" ;;
+            *) CONDITION="Unknown" ;;
+          esac
+
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          jq -n \
+            --argjson raining "$RAINING" \
+            --arg condition "$CONDITION" \
+            --arg last_checked "$NOW" \
+            '{raining: $raining, condition: $condition, last_checked: $last_checked}' \
+            > status.json
+
+          echo "status.json updated (weather details omitted from logs on purpose)"
+
+      - name: Commit status.json if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update weather status"
+          file_pattern: status.json
