@@ -104,7 +104,7 @@ jobs:
                   date: ($d.time[$i]? // null),
                   condition: condition_for($d.weather_code[$i]? // -1),
                   chance: ($d.precipitation_probability_max[$i]? // 0),
-                  likely_stream: (is_rain_code($d.weather_code[$i]? // -1) or (($d.precipitation_probability_max[$i]? // 0) >= 50))
+                  likely_stream: (($d.precipitation_probability_max[$i]? // 0) >= 50)
                 }
               ]
             ) catch []
