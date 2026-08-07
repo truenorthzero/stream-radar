@@ -1,7 +1,7 @@
 {
   "raining": false,
   "condition": "Partly cloudy",
-  "last_checked": "2026-08-07T00:08:11Z",
+  "last_checked": "2026-08-07T01:32:44Z",
   "forecast": [
     {
       "date": "2026-08-07",
@@ -12,7 +12,7 @@
     {
       "date": "2026-08-08",
       "condition": "Thunderstorm",
-      "chance": 50,
+      "chance": 45,
       "likely_stream": true
     },
     {
