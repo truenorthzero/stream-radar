@@ -1,7 +1,7 @@
 {
-  "raining": false,
-  "condition": "Partly cloudy",
-  "last_checked": "2026-08-08T19:57:43Z",
+  "raining": true,
+  "condition": "Rain showers",
+  "last_checked": "2026-08-08T20:37:17Z",
   "forecast": [
     {
       "date": "2026-08-09",
