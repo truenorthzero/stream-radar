@@ -1,7 +1,7 @@
 {
   "raining": false,
   "condition": "Foggy",
-  "last_checked": "2026-08-16T11:25:15Z",
+  "last_checked": "2026-08-16T11:48:27Z",
   "forecast": [
     {
       "date": "2026-08-17",
@@ -17,7 +17,7 @@
     },
     {
       "date": "2026-08-19",
-      "condition": "Partly cloudy",
+      "condition": "Drizzle",
       "chance": 56,
       "likely_stream": true
     }
