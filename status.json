@@ -1,25 +1,25 @@
 {
   "raining": false,
-  "condition": "Foggy",
-  "last_checked": "2026-08-21T07:49:18Z",
+  "condition": "Partly cloudy",
+  "last_checked": "2026-08-21T08:49:16Z",
   "forecast": [
     {
       "date": "2026-08-22",
-      "condition": "Drizzle",
-      "chance": 10,
+      "condition": "Partly cloudy",
+      "chance": 13,
       "likely_stream": false
     },
     {
       "date": "2026-08-23",
       "condition": "Thunderstorm",
-      "chance": 81,
+      "chance": 77,
       "likely_stream": true
     },
     {
       "date": "2026-08-24",
       "condition": "Drizzle",
-      "chance": 46,
-      "likely_stream": false
+      "chance": 60,
+      "likely_stream": true
     }
   ]
 }
