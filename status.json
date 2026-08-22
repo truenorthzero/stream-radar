@@ -1,14 +1,8 @@
 {
   "raining": false,
   "condition": "Clear sky",
-  "last_checked": "2026-08-22T03:47:09Z",
+  "last_checked": "2026-08-22T04:39:40Z",
   "forecast": [
-    {
-      "date": "2026-08-22",
-      "condition": "Partly cloudy",
-      "chance": 4,
-      "likely_stream": false
-    },
     {
       "date": "2026-08-23",
       "condition": "Rain",
@@ -20,6 +14,12 @@
       "condition": "Drizzle",
       "chance": 66,
       "likely_stream": true
+    },
+    {
+      "date": "2026-08-25",
+      "condition": "Drizzle",
+      "chance": 28,
+      "likely_stream": false
     }
   ]
 }
