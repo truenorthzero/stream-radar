@@ -1,14 +1,8 @@
 {
   "raining": false,
   "condition": "Partly cloudy",
-  "last_checked": "2026-09-29T02:13:10Z",
+  "last_checked": "2026-09-29T08:56:44Z",
   "forecast": [
-    {
-      "date": "2026-09-29",
-      "condition": "Partly cloudy",
-      "chance": 4,
-      "likely_stream": false
-    },
     {
       "date": "2026-09-30",
       "condition": "Partly cloudy",
@@ -17,9 +11,15 @@
     },
     {
       "date": "2026-10-01",
-      "condition": "Rain",
-      "chance": 23,
+      "condition": "Drizzle",
+      "chance": 30,
       "likely_stream": false
+    },
+    {
+      "date": "2026-10-02",
+      "condition": "Rain",
+      "chance": 54,
+      "likely_stream": true
     }
   ]
 }
