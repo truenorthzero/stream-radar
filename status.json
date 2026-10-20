@@ -1,11 +1,11 @@
 {
   "raining": false,
-  "condition": "Clear sky",
-  "last_checked": "2026-10-20T05:49:01Z",
+  "condition": "Partly cloudy",
+  "last_checked": "2026-10-20T11:17:30Z",
   "forecast": [
     {
       "date": "2026-10-21",
-      "condition": "Partly cloudy",
+      "condition": "Clear",
       "chance": 0,
       "likely_stream": false
     },
