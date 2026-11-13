@@ -1,24 +1,24 @@
 {
   "raining": false,
   "condition": "Partly cloudy",
-  "last_checked": "2026-11-12T23:47:26Z",
+  "last_checked": "2026-11-13T06:07:47Z",
   "forecast": [
     {
-      "date": "2026-11-13",
-      "condition": "Partly cloudy",
-      "chance": 4,
-      "likely_stream": false
-    },
-    {
       "date": "2026-11-14",
-      "condition": "Snow",
+      "condition": "Partly cloudy",
       "chance": 37,
       "likely_stream": false
     },
     {
       "date": "2026-11-15",
       "condition": "Partly cloudy",
-      "chance": 2,
+      "chance": 5,
+      "likely_stream": false
+    },
+    {
+      "date": "2026-11-16",
+      "condition": "Partly cloudy",
+      "chance": 0,
       "likely_stream": false
     }
   ]
